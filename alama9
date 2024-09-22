@@ -7,6 +7,10 @@ name=$1
 # dnf group info minimal-environment
 # Core is mandatory group in minimal-environment
 # dnf group list -v
+# timezone --isUtc
+#
+# background it:
+# nonup virt-install --noautoconsole --wait=-1 &> $tempdir/nohup.log &
 
 cat > $tempdir/kickstart.cfg << EOF
 lang en_US.UTF-8
