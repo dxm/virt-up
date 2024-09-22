@@ -1,0 +1,54 @@
+#!/bin/sh
+
+tempdir=$(mktemp -d /tmp/virt-init-XXXXX)
+
+name=$1
+#@^minimal-environment vs @core
+# dnf group info minimal-environment
+# Core is mandatory group in minimal-environment
+# dnf group list -v
+
+cat > $tempdir/kickstart.cfg << EOF
+lang en_US.UTF-8
+keyboard us
+network --bootproto=dhcp --hostname=$name
+rootpw password
+timezone America/Los_Angeles
+text
+skipx
+zerombr
+clearpart --all --initlabel
+part swap --asprimary --size=512
+part / --fstype=xfs --asprimary --size=1 --grow
+bootloader --location=mbr
+user --name=admin --password=password --groups=wheel
+eula --agreed
+reboot
+
+%packages
+@^minimal-environment
+acpid
+man
+man-pages
+openssh-clients
+qemu-guest-agent
+%end
+
+%post
+chkconfig acpid on
+%end
+EOF
+
+# -extra-args='inst.ks=file:kickstart.cfg' --initrd-inject=kickstart.cfg
+
+virt-install \
+    --name $name \
+    --hvm \
+    --vcpus ${vcpus:=2} \
+    --memory ${memory:=4096} \
+    --disk path=/var/lib/libvirt/images/${name}.img,size=${size:=10} \
+    --network network=default \
+    --vnc \
+    --location /var/lib/libvirt/images/AlmaLinux-9.4-x86_64-dvd.iso \
+    --extra-args='inst.ks=file:kickstart.cfg' \
+    --initrd-inject=$tempdir/kickstart.cfg
