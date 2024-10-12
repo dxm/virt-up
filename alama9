@@ -1,8 +1,5 @@
 #!/bin/sh
 
-tempdir=$(mktemp -d /tmp/virt-init-XXXXX)
-
-name=$1
 #@^minimal-environment vs @core
 # dnf group info minimal-environment
 # Core is mandatory group in minimal-environment
@@ -12,10 +9,17 @@ name=$1
 # background it:
 # nonup virt-install --noautoconsole --wait=-1 &> $tempdir/nohup.log &
 
+if [ $# -lt 1 ];then
+    echo "`basename $0` NAME"
+    exit
+fi
+
+tempdir=$(mktemp -d /tmp/virt-$1-XXXXX)
+
 cat > $tempdir/kickstart.cfg << EOF
 lang en_US.UTF-8
 keyboard us
-network --bootproto=dhcp --hostname=$name
+network --bootproto=dhcp --hostname=$1
 rootpw password
 timezone America/Los_Angeles
 text
@@ -46,7 +50,7 @@ EOF
 # -extra-args='inst.ks=file:kickstart.cfg' --initrd-inject=kickstart.cfg
 
 virt-install \
-    --name $name \
+    --name $1 \
     --hvm \
     --vcpus ${vcpus:=2} \
     --memory ${memory:=4096} \

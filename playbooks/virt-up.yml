@@ -1,0 +1,14 @@
+---
+- name: virt up
+  hosts: localhost
+  vars_files:
+  - vars/virt.yml
+
+  tasks:
+  - virt: command=list_vms
+    register: virt
+
+  - name: start vm
+    virt: name={{ item.name }} state=running
+    when: item.name in virt.list_vms
+    with_items: '{{ virt_hosts }}'

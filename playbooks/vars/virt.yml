@@ -1,0 +1,7 @@
+---
+#virt_delete: yes
+virt_hosts:
+- name: sql1
+- name: app1
+- name: scm1
+- name: dev1

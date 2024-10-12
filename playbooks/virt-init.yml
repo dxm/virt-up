@@ -1,0 +1,42 @@
+---
+- name: virt init
+  hosts: localhost
+  vars_files:
+  - vars/virt.yml
+
+  tasks:
+  - virt: command=list_vms
+    register: virt
+
+  - set_fact:
+      missing: "{{ virt_hosts | map(attribute='name') | list | difference(virt.list_vms) }}"
+
+  - name: create temp directory
+    tempfile:
+      state: directory
+    register: tempdir
+
+  - name: create kickstart file
+    template:
+      src: base.ks
+      dest: '{{ tempdir.path }}/{{ item.name }}.ks'
+    when: item.name in missing
+    with_items: '{{ virt_hosts }}'
+
+  - name: create init script
+    template:
+      src: init.sh
+      dest: '{{ tempdir.path }}/{{ item.name }}.sh'
+      mode: 0755
+    when: item.name in missing
+    with_items: '{{ virt_hosts }}'
+
+  - name: run init script
+    command: '{{ tempdir.path }}/{{ item.name }}.sh'
+    when: item.name in missing
+    with_items: '{{ virt_hosts }}'
+
+  - name: remove temp dir
+    file:
+      path: '{{ tempdir.path }}'
+      state: absent

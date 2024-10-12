@@ -1,0 +1,21 @@
+---
+- name: virt down
+  hosts: localhost
+  vars_files:
+  - vars/virt.yml
+
+  tasks:
+
+  - virt: command=list_vms
+    register: virt
+
+  - name: shutdown vm
+    virt: name={{ item.name }} state=destroyed
+    when: item.name in virt.list_vms
+    with_items: '{{ virt_hosts }}'
+
+  - name: delete vm
+    command: virsh undefine {{ item.name }} --remove-all-storage
+    when: item.name in virt.list_vms and
+      ( virt_delete is defined and virt_delete | bool )
+    with_items: '{{ virt_hosts }}'
